@@ -43,6 +43,10 @@ func (app *application) methodNotAllowedResponse(c echo.Context) {
 	app.errorResponse(c, http.StatusMethodNotAllowed, message)
 }
 
+func (app *application) badRequestResponse(c echo.Context, err error) {
+	app.errorResponse(c, http.StatusBadRequest, err.Error())
+}
+
 // Custom HTTP error handler for Echo
 func (app *application) customHTTPErrorHandler(err error, c echo.Context) {
 	if c.Response().Committed {

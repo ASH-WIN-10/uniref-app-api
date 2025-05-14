@@ -8,7 +8,23 @@ import (
 )
 
 func (app *application) createClientHandler(c echo.Context) error {
-	return c.String(http.StatusOK, "Client created\n")
+	c.Request().Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+	input := new(data.Client)
+	if err := c.Bind(input); err != nil {
+		app.badRequestResponse(c, err)
+		return nil
+	}
+
+	client := data.Client{
+		ID:          input.ID,
+		CompanyName: input.CompanyName,
+		ClientName:  input.ClientName,
+		Email:       input.Email,
+		Phone:       input.Phone,
+	}
+
+	return c.JSONPretty(http.StatusOK, envelope{"client": client}, "\t")
 }
 
 func (app *application) showClientHandler(c echo.Context) error {
