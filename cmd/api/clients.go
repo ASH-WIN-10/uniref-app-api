@@ -12,9 +12,10 @@ func (app *application) createClientHandler(c echo.Context) error {
 }
 
 func (app *application) showClientHandler(c echo.Context) error {
-	id, err := readIDParam(c)
+	id, err := app.readIDParam(c)
 	if err != nil {
-		return err
+		app.notFoundResponse(c)
+		return nil
 	}
 
 	data := data.Client{
