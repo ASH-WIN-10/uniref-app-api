@@ -25,5 +25,5 @@ func (app *application) showClientHandler(c echo.Context) error {
 		Phone:       "123-456-7890",
 	}
 
-	return c.JSONPretty(http.StatusOK, data, "\t")
+	return c.JSONPretty(http.StatusOK, envelope{"client": data}, "\t")
 }
