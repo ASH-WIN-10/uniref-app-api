@@ -36,7 +36,7 @@ func main() {
 		logger: logger,
 	}
 
-	e.GET("/v1/healthcheck", app.healthcheckHandler)
+	app.registerRoutes(e)
 
 	logger.Info("Starting server", "version", version, "port", cfg.port, "env", cfg.env)
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", cfg.port)))
