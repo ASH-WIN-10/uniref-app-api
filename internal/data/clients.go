@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -34,7 +35,39 @@ func (m *ClientModel) Insert(client *Client) error {
 }
 
 func (m *ClientModel) Get(id int) (*Client, error) {
-	return nil, nil
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	query := `
+        SELECT id, created_at, company_name, client_name, email, phone
+        FROM clients
+        WHERE id = $1`
+
+	var client Client
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(
+		&client.ID,
+		&client.CreatedAt,
+		&client.CompanyName,
+		&client.ClientName,
+		&client.Email,
+		&client.Phone,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &client, nil
 }
 
 func (m *ClientModel) Update(client *Client) error {

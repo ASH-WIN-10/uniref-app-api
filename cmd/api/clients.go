@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -42,13 +43,16 @@ func (app *application) showClientHandler(c echo.Context) error {
 		return nil
 	}
 
-	data := data.Client{
-		ID:          id,
-		CompanyName: "John Doe Inc.",
-		ClientName:  "John Doe",
-		Email:       "johndoe@example.com",
-		Phone:       "123-456-7890",
+	client, err := app.models.Clients.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(c)
+		default:
+			app.serverErrorResponse(c, err)
+		}
+		return nil
 	}
 
-	return c.JSONPretty(http.StatusOK, envelope{"client": data}, "\t")
+	return c.JSONPretty(http.StatusOK, envelope{"client": client}, "\t")
 }
