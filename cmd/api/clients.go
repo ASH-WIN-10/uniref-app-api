@@ -10,10 +10,28 @@ import (
 )
 
 func (app *application) createClientHandler(c echo.Context) error {
-	c.Request().Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-
 	input := new(data.Client)
-	if err := c.Bind(input); err != nil {
+
+	err := echo.FormFieldBinder(c).
+		String("client_name", &input.ClientName).
+		String("company_name", &input.CompanyName).
+		String("email", &input.Email).
+		String("phone", &input.Phone).
+		BindError()
+
+	if err != nil {
+		app.badRequestResponse(c, err)
+		return nil
+	}
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		app.badRequestResponse(c, err)
+		return nil
+	}
+
+	filesMetadata, err := app.models.Files.GetFilesMetadata(form)
+	if err != nil {
 		app.badRequestResponse(c, err)
 		return nil
 	}
@@ -23,9 +41,10 @@ func (app *application) createClientHandler(c echo.Context) error {
 		ClientName:  input.ClientName,
 		Email:       input.Email,
 		Phone:       input.Phone,
+		Files:       filesMetadata,
 	}
 
-	err := app.models.Clients.Insert(&client)
+	err = app.models.Clients.Insert(&client)
 	if err != nil {
 		app.serverErrorResponse(c, err)
 		return nil

@@ -14,6 +14,7 @@ type Client struct {
 	ClientName  string    `json:"client_name"`
 	Email       string    `json:"email"`
 	Phone       string    `json:"phone"`
+	Files       []File    `json:"files"`
 }
 
 type ClientModel struct {

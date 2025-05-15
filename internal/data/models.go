@@ -11,6 +11,7 @@ var (
 
 type Models struct {
 	Clients ClientModel
+	Files   FileModel
 }
 
 func NewModels(db *sql.DB) Models {
