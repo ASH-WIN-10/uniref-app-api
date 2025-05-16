@@ -16,7 +16,7 @@ func (app *application) SaveFilesLocally(form *multipart.Form, clientID int) ([]
 		return nil, data.ErrNoFilesProvided
 	}
 
-	dirPath := filepath.Join("static", "files", fmt.Sprintf("%d", clientID))
+	dirPath := filepath.Join("assets", "files", fmt.Sprintf("%d", clientID))
 
 	err := os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {
