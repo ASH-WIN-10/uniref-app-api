@@ -8,12 +8,13 @@ import (
 )
 
 type File struct {
-	ID        int       `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	FileName  string    `json:"file_name"`
-	FilePath  string    `json:"file_path"`
-	Category  string    `json:"category"`
-	ClientID  int       `json:"client_id"`
+	ID               int       `json:"id"`
+	CreatedAt        time.Time `json:"created_at"`
+	OriginalFileName string    `json:"original_file_name"`
+	FileName         string    `json:"file_name"`
+	FilePath         string    `json:"file_path"`
+	Category         string    `json:"category"`
+	ClientID         int       `json:"client_id"`
 }
 
 type FileModel struct {
@@ -27,8 +28,8 @@ func (m FileModel) Insert(files []File) error {
 	}
 
 	query := `
-        INSERT INTO files (file_name, file_path, category, client_id)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO files (original_file_name, file_name, file_path, category, client_id)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING id, created_at`
 
 	stmt, err := tx.Prepare(query)
@@ -39,7 +40,7 @@ func (m FileModel) Insert(files []File) error {
 
 	for i := range files {
 		file := &files[i]
-		args := []any{file.FileName, file.FilePath, file.Category, file.ClientID}
+		args := []any{file.OriginalFileName, file.FileName, file.FilePath, file.Category, file.ClientID}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
@@ -68,7 +69,7 @@ func (m FileModel) Insert(files []File) error {
 
 func (m FileModel) Get(clientID int) ([]File, error) {
 	query := `
-        SELECT id, created_at, file_name, file_path, category, client_id
+        SELECT id, created_at, original_file_name, file_name, file_path, category, client_id
         FROM files
         WHERE client_id = $1`
 
@@ -87,6 +88,7 @@ func (m FileModel) Get(clientID int) ([]File, error) {
 		err := rows.Scan(
 			&file.ID,
 			&file.CreatedAt,
+			&file.OriginalFileName,
 			&file.FileName,
 			&file.FilePath,
 			&file.Category,

@@ -1,6 +1,7 @@
 CREATE TABLE files (
     id bigserial PRIMARY KEY,
     created_at TIMESTAMP DEFAULT now(),
+    original_file_name TEXT NOT NULL,
     file_name TEXT NOT NULL,
     file_path TEXT NOT NULL,
     client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,

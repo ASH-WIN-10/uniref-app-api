@@ -53,10 +53,11 @@ func (app *application) SaveFilesLocally(form *multipart.Form, clientID int) ([]
 			}
 
 			filesMetadata = append(filesMetadata, data.File{
-				FileName: fileName,
-				FilePath: filePath,
-				Category: category,
-				ClientID: clientID,
+				OriginalFileName: file.Filename,
+				FileName:         fileName,
+				FilePath:         filePath,
+				Category:         category,
+				ClientID:         clientID,
 			})
 		}
 	}
