@@ -54,5 +54,14 @@ func (m FileModel) Insert(files []File) error {
 		}
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		rbErr := tx.Rollback()
+		if rbErr != nil {
+			return fmt.Errorf("commit failed: %v; rollback failed: %v", err, rbErr)
+		}
+		return fmt.Errorf("commit failed: %w", err)
+	}
+
 	return nil
 }
