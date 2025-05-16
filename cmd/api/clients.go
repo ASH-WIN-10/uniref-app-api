@@ -45,7 +45,7 @@ func (app *application) createClientHandler(c echo.Context) error {
 
 	filesMetadata, err := app.SaveFilesLocally(form, client.ID)
 	if err != nil {
-		if errors.Is(err, data.ErrNoFilesProvided) {
+		if errors.Is(err, ErrNoFilesProvided) {
 			app.logger.Info(fmt.Sprintf("%+v", filesMetadata))
 			filesMetadata = []data.File{}
 		} else {

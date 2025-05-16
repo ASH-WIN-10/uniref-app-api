@@ -3,7 +3,6 @@ package data
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 )
@@ -20,10 +19,6 @@ type File struct {
 type FileModel struct {
 	DB *sql.DB
 }
-
-var (
-	ErrNoFilesProvided = errors.New("no files provided")
-)
 
 func (m FileModel) Insert(files []File) error {
 	tx, err := m.DB.Begin()
