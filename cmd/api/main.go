@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ASH-WIN-10/Himwan-Refrigerations-Backend/internal/data"
+	"github.com/ASH-WIN-10/uniref-app-backend/internal/data"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
 )

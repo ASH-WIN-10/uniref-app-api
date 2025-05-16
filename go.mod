@@ -1,4 +1,4 @@
-module github.com/ASH-WIN-10/Himwan-Refrigerations-Backend
+module github.com/ASH-WIN-10/uniref-app-backend
 
 go 1.24.3
 

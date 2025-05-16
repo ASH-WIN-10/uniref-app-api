@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ASH-WIN-10/Himwan-Refrigerations-Backend/internal/data"
+	"github.com/ASH-WIN-10/uniref-app-backend/internal/data"
 )
 
 func (app *application) SaveFilesLocally(form *multipart.Form, clientID int) ([]data.File, error) {
