@@ -1,16 +1,16 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
-	"mime/multipart"
 	"time"
 )
 
 type File struct {
 	ID        int       `json:"id"`
-	CreatedAt time.Time `json:"-"`
+	CreatedAt time.Time `json:"created_at"`
 	FileName  string    `json:"file_name"`
 	FilePath  string    `json:"file_path"`
 	Category  string    `json:"category"`
@@ -21,29 +21,43 @@ type FileModel struct {
 	DB *sql.DB
 }
 
-func (m *FileModel) GetFilesMetadata(form *multipart.Form) ([]File, error) {
-	if form == nil || len(form.File) == 0 {
-		return nil, errors.New("no files provided")
+var (
+	ErrNoFilesProvided = errors.New("no files provided")
+)
+
+func (m FileModel) Insert(files []File) error {
+	tx, err := m.DB.Begin()
+	if err != nil {
+		return err
 	}
 
-	var filesMetadata []File
+	query := `
+        INSERT INTO files (file_name, file_path, category, client_id)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, created_at`
 
-	fileCategories := []string{"purchase_order", "invoice", "handing_over_report", "pms_report"}
-	for _, category := range fileCategories {
-		if _, ok := form.File[category]; !ok {
-			continue
-		}
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
 
-		for _, fileHeader := range form.File[category] {
-			fileName := fmt.Sprintf("%v_%s", time.Now().Format("2006-01-02_3:04_PM"), fileHeader.Filename)
-			filePath := fmt.Sprintf("/files/%s/%s", category, fileName)
-			filesMetadata = append(filesMetadata, File{
-				FileName: fileName,
-				FilePath: filePath,
-				Category: category,
-			})
+	for i := range files {
+		file := &files[i]
+		args := []any{file.FileName, file.FilePath, file.Category, file.ClientID}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		err := stmt.QueryRowContext(ctx, args...).Scan(&file.ID, &file.CreatedAt)
+		if err != nil {
+			rbErr := tx.Rollback()
+			if rbErr != nil {
+				return fmt.Errorf("query failed: %v; rollback failed: %v", err, rbErr)
+			}
+			return fmt.Errorf("query failed: %w", err)
 		}
 	}
 
-	return filesMetadata, nil
+	return nil
 }

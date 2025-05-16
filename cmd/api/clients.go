@@ -30,24 +30,37 @@ func (app *application) createClientHandler(c echo.Context) error {
 		return nil
 	}
 
-	filesMetadata, err := app.models.Files.GetFilesMetadata(form)
-	if err != nil {
-		app.badRequestResponse(c, err)
-		return nil
-	}
-
 	client := data.Client{
 		CompanyName: input.CompanyName,
 		ClientName:  input.ClientName,
 		Email:       input.Email,
 		Phone:       input.Phone,
-		Files:       filesMetadata,
 	}
 
 	err = app.models.Clients.Insert(&client)
 	if err != nil {
 		app.serverErrorResponse(c, err)
 		return nil
+	}
+
+	filesMetadata, err := app.SaveFilesLocally(form, client.ID)
+	if err != nil {
+		if errors.Is(err, data.ErrNoFilesProvided) {
+			app.logger.Info(fmt.Sprintf("%+v", filesMetadata))
+			filesMetadata = []data.File{}
+		} else {
+			app.serverErrorResponse(c, err)
+			return nil
+		}
+	}
+
+	if len(filesMetadata) > 0 {
+		err = app.models.Files.Insert(filesMetadata)
+		if err != nil {
+			app.serverErrorResponse(c, err)
+			return nil
+		}
+		client.Files = filesMetadata
 	}
 
 	c.Response().Header().Set("Location", fmt.Sprintf("/v1/clients/%d", client.ID))

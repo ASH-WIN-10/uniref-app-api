@@ -17,5 +17,6 @@ type Models struct {
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Clients: ClientModel{DB: db},
+		Files:   FileModel{DB: db},
 	}
 }
