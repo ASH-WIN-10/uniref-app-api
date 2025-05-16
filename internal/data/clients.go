@@ -71,10 +71,35 @@ func (m *ClientModel) Get(id int) (*Client, error) {
 	return &client, nil
 }
 
-func (m *ClientModel) Update(client *Client) error {
+func (m *ClientModel) Delete(id int) error {
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	query := `
+        DELETE FROM clients
+        WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := m.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
 	return nil
 }
 
-func (m *ClientModel) Delete(id int) error {
+func (m *ClientModel) Update(client *Client) error {
 	return nil
 }

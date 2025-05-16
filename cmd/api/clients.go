@@ -89,3 +89,24 @@ func (app *application) showClientHandler(c echo.Context) error {
 
 	return c.JSONPretty(http.StatusOK, envelope{"client": client}, "\t")
 }
+
+func (app *application) deleteClientHandler(c echo.Context) error {
+	id, err := app.readIDParam(c)
+	if err != nil {
+		app.notFoundResponse(c)
+		return nil
+	}
+
+	err = app.models.Clients.Delete(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(c)
+		default:
+			app.serverErrorResponse(c, err)
+		}
+		return nil
+	}
+
+	return c.JSONPretty(http.StatusOK, envelope{"message": "client successfully deleted"}, "\t")
+}
