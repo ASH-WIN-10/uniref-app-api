@@ -45,23 +45,16 @@ func (app *application) createClientHandler(c echo.Context) error {
 
 	filesMetadata, err := app.SaveFilesLocally(form, client.ID)
 	if err != nil {
-		if errors.Is(err, ErrNoFilesProvided) {
-			app.logger.Info(fmt.Sprintf("%+v", filesMetadata))
-			filesMetadata = []data.File{}
-		} else {
-			app.serverErrorResponse(c, err)
-			return nil
-		}
+		app.serverErrorResponse(c, err)
+		return nil
 	}
 
-	if len(filesMetadata) > 0 {
-		err = app.models.Files.Insert(filesMetadata)
-		if err != nil {
-			app.serverErrorResponse(c, err)
-			return nil
-		}
-		client.Files = filesMetadata
+	err = app.models.Files.Insert(filesMetadata)
+	if err != nil {
+		app.serverErrorResponse(c, err)
+		return nil
 	}
+	client.Files = filesMetadata
 
 	c.Response().Header().Set("Location", fmt.Sprintf("/v1/clients/%d", client.ID))
 

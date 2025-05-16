@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -12,13 +11,10 @@ import (
 	"github.com/ASH-WIN-10/Himwan-Refrigerations-Backend/internal/data"
 )
 
-var (
-	ErrNoFilesProvided = errors.New("no files provided")
-)
-
 func (app *application) SaveFilesLocally(form *multipart.Form, clientID int) ([]data.File, error) {
 	if form == nil || len(form.File) == 0 {
-		return nil, ErrNoFilesProvided
+		app.logger.Info("No files provided")
+		return []data.File{}, nil
 	}
 
 	dirPath := filepath.Join("assets", "files", fmt.Sprintf("%d", clientID))
