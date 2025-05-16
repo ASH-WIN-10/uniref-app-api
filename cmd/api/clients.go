@@ -86,5 +86,13 @@ func (app *application) showClientHandler(c echo.Context) error {
 		return nil
 	}
 
+	files, err := app.models.Files.Get(id)
+	if err != nil {
+		app.serverErrorResponse(c, err)
+		return nil
+	}
+
+	client.Files = files
+
 	return c.JSONPretty(http.StatusOK, envelope{"client": client}, "\t")
 }

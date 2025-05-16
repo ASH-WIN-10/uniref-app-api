@@ -65,3 +65,44 @@ func (m FileModel) Insert(files []File) error {
 
 	return nil
 }
+
+func (m FileModel) Get(clientID int) ([]File, error) {
+	query := `
+        SELECT id, created_at, file_name, file_path, category, client_id
+        FROM files
+        WHERE client_id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, clientID)
+	if err != nil {
+		return nil, err
+	}
+
+	files := []File{}
+	for rows.Next() {
+		var file File
+
+		err := rows.Scan(
+			&file.ID,
+			&file.CreatedAt,
+			&file.FileName,
+			&file.FilePath,
+			&file.Category,
+			&file.ClientID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		files = append(files, file)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
