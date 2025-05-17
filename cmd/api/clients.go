@@ -117,3 +117,33 @@ func (app *application) deleteClientHandler(c echo.Context) error {
 
 	return c.JSONPretty(http.StatusOK, envelope{"message": "client successfully deleted"}, "\t")
 }
+
+func (app *application) listClientsHandler(c echo.Context) error {
+	var input struct {
+		CompanyName string
+		data.Filters
+	}
+
+	v := validator.New()
+	qs := c.QueryParams()
+
+	input.CompanyName = app.readString(qs, "company_name", "")
+
+	input.Filters.Page = app.readInt(qs, "page", 1, v)
+	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
+	input.Filters.Sort = app.readString(qs, "sort", "id")
+	input.Filters.SortSafelist = []string{"id", "company_name", "-id", "-company_name"}
+
+	if data.ValidateFilters(v, input.Filters); !v.Valid() {
+		app.failedValidationResponse(c, v.Errors)
+		return nil
+	}
+
+	clients, metadata, err := app.models.Clients.GetAll(input.CompanyName, input.Filters)
+	if err != nil {
+		app.serverErrorResponse(c, err)
+		return nil
+	}
+
+	return c.JSONPretty(http.StatusOK, envelope{"clients": clients, "metadata": metadata}, "\t")
+}

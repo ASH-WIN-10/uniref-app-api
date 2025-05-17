@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ASH-WIN-10/uniref-app-backend/internal/validator"
@@ -34,7 +35,7 @@ func ValidateClient(v *validator.Validator, client *Client) {
 	v.Check(len(client.Phone) == 10, "phone", "must be 10 bytes long")
 }
 
-func (m *ClientModel) Insert(client *Client) error {
+func (m ClientModel) Insert(client *Client) error {
 	query := `
         INSERT INTO clients (company_name, client_name, email, phone)
         VALUES ($1, $2, $3, $4)
@@ -48,7 +49,7 @@ func (m *ClientModel) Insert(client *Client) error {
 	return m.DB.QueryRowContext(ctx, query, args...).Scan(&client.ID, &client.CreatedAt)
 }
 
-func (m *ClientModel) Get(id int) (*Client, error) {
+func (m ClientModel) Get(id int) (*Client, error) {
 	if id < 1 {
 		return nil, ErrRecordNotFound
 	}
@@ -84,7 +85,7 @@ func (m *ClientModel) Get(id int) (*Client, error) {
 	return &client, nil
 }
 
-func (m *ClientModel) Delete(id int) error {
+func (m ClientModel) Delete(id int) error {
 	if id < 1 {
 		return ErrRecordNotFound
 	}
@@ -113,6 +114,56 @@ func (m *ClientModel) Delete(id int) error {
 	return nil
 }
 
-func (m *ClientModel) Update(client *Client) error {
+func (m ClientModel) Update(client *Client) error {
 	return nil
+}
+
+func (m ClientModel) GetAll(companyName string, filters Filters) ([]*Client, Metadata, error) {
+	query := fmt.Sprintf(`
+        SELECT count(*) OVER(), id, created_at, company_name, client_name, email, phone
+        FROM clients
+        WHERE (to_tsvector('simple', company_name) @@ plainto_tsquery('simple', $1) OR $1 = '')
+        ORDER BY %s %s, id
+        LIMIT $2 OFFSET $3`, filters.sortColumn(), filters.sortDirection())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	args := []any{companyName, filters.limit(), filters.offset()}
+
+	rows, err := m.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, Metadata{}, err
+	}
+	defer rows.Close()
+
+	totalRecords := 0
+	clients := []*Client{}
+	for rows.Next() {
+		var client Client
+
+		err := rows.Scan(
+			&totalRecords,
+			&client.ID,
+			&client.CreatedAt,
+			&client.CompanyName,
+			&client.ClientName,
+			&client.Email,
+			&client.Phone,
+		)
+
+		if err != nil {
+			return nil, Metadata{}, err
+		}
+
+		clients = append(clients, &client)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, Metadata{}, err
+	}
+
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
+
+	return clients, metadata, nil
 }
