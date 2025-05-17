@@ -51,6 +51,11 @@ func (app *application) failedValidationResponse(c echo.Context, errors map[stri
 	app.errorResponse(c, http.StatusUnprocessableEntity, errors)
 }
 
+func (app *application) editConflictResponse(c echo.Context) {
+	message := "unable to update record due to an edit conflict, please try again"
+	app.errorResponse(c, http.StatusConflict, message)
+}
+
 // Custom HTTP error handler for Echo
 func (app *application) customHTTPErrorHandler(err error, c echo.Context) {
 	if c.Response().Committed {

@@ -19,8 +19,11 @@ func (app *application) registerRoutes(e *echo.Echo) {
 	e.Static("/assets", "assets")
 
 	e.GET("/v1/healthcheck", app.healthcheckHandler)
+
 	e.GET("/v1/clients", app.listClientsHandler)
 	e.POST("/v1/clients", app.createClientHandler)
+
 	e.GET("/v1/clients/:id", app.showClientHandler)
+	e.PUT("/v1/clients/:id", app.updateClientHandler)
 	e.DELETE("/v1/clients/:id", app.deleteClientHandler)
 }

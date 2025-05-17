@@ -115,6 +115,33 @@ func (m ClientModel) Delete(id int) error {
 }
 
 func (m ClientModel) Update(client *Client) error {
+	query := `
+        UPDATE clients
+        SET company_name = $1, client_name = $2, email = $3, phone = $4
+        WHERE id = $5`
+
+	args := []any{
+		client.CompanyName,
+		client.ClientName,
+		client.Email,
+		client.Phone,
+		client.ID,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	res, err := m.DB.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil {
+		return err
+	} else if rowsAffected == 0 {
+		return ErrEditConflict
+	}
+
 	return nil
 }
 

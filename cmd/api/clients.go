@@ -147,3 +147,65 @@ func (app *application) listClientsHandler(c echo.Context) error {
 
 	return c.JSONPretty(http.StatusOK, envelope{"clients": clients, "metadata": metadata}, "\t")
 }
+
+func (app *application) updateClientHandler(c echo.Context) error {
+	id, err := app.readIDParam(c)
+	if err != nil {
+		app.notFoundResponse(c)
+		return nil
+	}
+
+	client, err := app.models.Clients.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(c)
+		default:
+			app.serverErrorResponse(c, err)
+		}
+		return nil
+	}
+
+	var input struct {
+		CompanyName string `json:"company_name"`
+		ClientName  string `json:"client_name"`
+		Email       string `json:"email"`
+		Phone       string `json:"phone"`
+	}
+
+	err = echo.FormFieldBinder(c).
+		String("client_name", &input.ClientName).
+		String("company_name", &input.CompanyName).
+		String("email", &input.Email).
+		String("phone", &input.Phone).
+		BindError()
+
+	if err != nil {
+		app.badRequestResponse(c, err)
+		return nil
+	}
+
+	client.CompanyName = input.CompanyName
+	client.ClientName = input.ClientName
+	client.Email = input.Email
+	client.Phone = input.Phone
+
+	v := validator.New()
+	if data.ValidateClient(v, client); !v.Valid() {
+		app.failedValidationResponse(c, v.Errors)
+		return nil
+	}
+
+	err = app.models.Clients.Update(client)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			app.editConflictResponse(c)
+		default:
+			app.serverErrorResponse(c, err)
+		}
+		return nil
+	}
+
+	return c.JSONPretty(http.StatusOK, envelope{"client": client}, "\t")
+}
