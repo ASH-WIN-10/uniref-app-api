@@ -50,7 +50,8 @@ func (app *application) createClientHandler(c echo.Context) error {
 		return nil
 	}
 
-	filesMetadata, err := app.SaveFilesLocally(form, client.ID)
+	filesMetadata := app.CalculateFilesMetadata(form, client.ID)
+	err = app.SaveFilesLocally(form, filesMetadata)
 	if err != nil {
 		app.serverErrorResponse(c, err)
 		return nil
