@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+
+	"github.com/ASH-WIN-10/uniref-app-backend/internal/validator"
 )
 
 type Client struct {
@@ -19,6 +21,17 @@ type Client struct {
 
 type ClientModel struct {
 	DB *sql.DB
+}
+
+func ValidateClient(v *validator.Validator, client *Client) {
+	v.Check(client.CompanyName != "", "company_name", "must be provided")
+	v.Check(len(client.CompanyName) <= 100, "company_name", "must not be more than 100 bytes long")
+
+	v.Check(client.ClientName != "", "client_name", "must be provided")
+	v.Check(len(client.ClientName) <= 100, "client_name", "must not be more than 100 bytes long")
+
+	v.Check(validator.Matches(client.Email, validator.EmailRX), "email", "must be a valid email address")
+	v.Check(len(client.Phone) == 10, "phone", "must be 10 bytes long")
 }
 
 func (m *ClientModel) Insert(client *Client) error {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ASH-WIN-10/uniref-app-backend/internal/data"
+	"github.com/ASH-WIN-10/uniref-app-backend/internal/validator"
 	"github.com/labstack/echo/v4"
 )
 
@@ -35,6 +36,12 @@ func (app *application) createClientHandler(c echo.Context) error {
 		ClientName:  input.ClientName,
 		Email:       input.Email,
 		Phone:       input.Phone,
+	}
+
+	v := validator.New()
+	if data.ValidateClient(v, &client); !v.Valid() {
+		app.failedValidationResponse(c, v.Errors)
+		return nil
 	}
 
 	err = app.models.Clients.Insert(&client)

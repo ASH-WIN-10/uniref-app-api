@@ -47,6 +47,10 @@ func (app *application) badRequestResponse(c echo.Context, err error) {
 	app.errorResponse(c, http.StatusBadRequest, err.Error())
 }
 
+func (app *application) failedValidationResponse(c echo.Context, errors map[string]string) {
+	app.errorResponse(c, http.StatusUnprocessableEntity, errors)
+}
+
 // Custom HTTP error handler for Echo
 func (app *application) customHTTPErrorHandler(err error, c echo.Context) {
 	if c.Response().Committed {
