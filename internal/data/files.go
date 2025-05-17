@@ -108,3 +108,32 @@ func (m FileModel) Get(clientID int) ([]File, error) {
 
 	return files, nil
 }
+
+func (m FileModel) Delete(clientID int) error {
+	if clientID < 1 {
+		return ErrRecordNotFound
+	}
+
+	query := `
+        DELETE FROM files
+        WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := m.DB.ExecContext(ctx, query, clientID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
+	return nil
+}

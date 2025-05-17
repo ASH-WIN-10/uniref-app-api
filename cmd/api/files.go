@@ -79,3 +79,57 @@ func (app *application) SaveFilesLocally(form *multipart.Form, filesMetadata []d
 
 	return nil
 }
+
+func (app *application) DeleteFiles(newFiles, oldFiles []data.File) ([]data.File, error) {
+	if len(oldFiles) == 0 {
+		return nil, nil
+	}
+
+	deletedFiles := []data.File{}
+	for _, oldFile := range oldFiles {
+		if oldFile.FilePath == "" {
+			continue
+		}
+
+		found := false
+		for _, newFile := range newFiles {
+			if oldFile.FilePath == newFile.FilePath {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			deletedFiles = append(deletedFiles, oldFile)
+			err := os.Remove(oldFile.FilePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to delete file: %w", err)
+			}
+		}
+	}
+
+	return deletedFiles, nil
+}
+
+func (app *application) GetNewlyAddedFiles(oldFiles, newFiles []data.File) []data.File {
+	if len(newFiles) == 0 {
+		return nil
+	}
+
+	newlyAddedFiles := []data.File{}
+	for _, newFile := range newFiles {
+		found := false
+		for _, oldFile := range oldFiles {
+			if newFile.FilePath == oldFile.FilePath {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			newlyAddedFiles = append(newlyAddedFiles, newFile)
+		}
+	}
+
+	return newlyAddedFiles
+}
