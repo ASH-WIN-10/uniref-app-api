@@ -28,4 +28,5 @@ func (app *application) registerRoutes(e *echo.Echo) {
 	e.DELETE("/v1/clients/:id", app.deleteClientHandler)
 
 	e.POST("/v1/clients/:id/files", app.createFileHandler)
+	e.DELETE("/v1/clients/:clientId/files/:id", app.deleteFileHandler)
 }

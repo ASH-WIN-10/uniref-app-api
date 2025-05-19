@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -109,31 +110,29 @@ func (m FileModel) Get(clientID int) ([]File, error) {
 	return files, nil
 }
 
-func (m FileModel) Delete(clientID int) error {
-	if clientID < 1 {
-		return ErrRecordNotFound
+func (m FileModel) Delete(id, clientId int) (string, error) {
+	if id < 1 {
+		return "", ErrRecordNotFound
 	}
 
 	query := `
         DELETE FROM files
-        WHERE id = $1`
+        WHERE id = $1 AND client_id = $2
+        RETURNING file_path`
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	result, err := m.DB.ExecContext(ctx, query, clientID)
+	args := []any{id, clientId}
+	filepath := ""
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&filepath)
 	if err != nil {
-		return err
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", ErrRecordNotFound
+		}
+		return "", err
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		return ErrRecordNotFound
-	}
-
-	return nil
+	return filepath, nil
 }

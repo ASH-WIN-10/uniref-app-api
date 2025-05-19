@@ -165,3 +165,12 @@ func GetNewlyAddedFiles(oldFiles, newFiles []File) []File {
 
 	return newlyAddedFiles
 }
+
+func DeleteFileLocally(filePath string) error {
+	err := os.Remove(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+
+	return nil
+}

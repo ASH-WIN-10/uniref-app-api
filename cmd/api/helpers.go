@@ -19,6 +19,14 @@ func (app *application) readIDParam(c echo.Context) (int, error) {
 	return id, nil
 }
 
+func (app *application) readIntParam(c echo.Context, param string) (int, error) {
+	id, err := strconv.Atoi(c.Param(param))
+	if err != nil || id < 1 {
+		return 0, errors.New("invalid ID parameter")
+	}
+	return id, nil
+}
+
 func (app *application) readString(qs url.Values, key string, defaultValue string) string {
 	s := qs.Get(key)
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/ASH-WIN-10/uniref-app-backend/internal/data"
@@ -38,4 +39,37 @@ func (app *application) createFileHandler(c echo.Context) error {
 	}
 
 	return c.JSONPretty(http.StatusCreated, envelope{"file": files[0]}, "\t")
+}
+
+func (app *application) deleteFileHandler(c echo.Context) error {
+	fileId, err := app.readIDParam(c)
+	if err != nil {
+		app.notFoundResponse(c)
+		return nil
+	}
+
+	clientId, err := app.readIntParam(c, "clientId")
+	if err != nil {
+		app.notFoundResponse(c)
+		return nil
+	}
+
+	filepath, err := app.models.Files.Delete(fileId, clientId)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(c)
+		default:
+			app.serverErrorResponse(c, err)
+		}
+		return nil
+	}
+
+	err = data.DeleteFileLocally(filepath)
+	if err != nil {
+		app.serverErrorResponse(c, err)
+		return nil
+	}
+
+	return c.JSONPretty(http.StatusOK, envelope{"message": "file successfully deleted"}, "\t")
 }
