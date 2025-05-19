@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/ASH-WIN-10/uniref-app-backend/internal/data"
 	"github.com/ASH-WIN-10/uniref-app-backend/internal/validator"
@@ -106,6 +107,12 @@ func (app *application) deleteClientHandler(c echo.Context) error {
 	id, err := app.readIDParam(c)
 	if err != nil {
 		app.notFoundResponse(c)
+		return nil
+	}
+
+	err = os.RemoveAll(fmt.Sprintf("assets/files/%d", id))
+	if err != nil {
+		app.serverErrorResponse(c, err)
 		return nil
 	}
 

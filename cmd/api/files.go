@@ -100,11 +100,11 @@ func (app *application) DeleteFiles(newFiles, oldFiles []data.File) ([]data.File
 		}
 
 		if !found {
-			deletedFiles = append(deletedFiles, oldFile)
 			err := os.Remove(oldFile.FilePath)
 			if err != nil {
 				return nil, fmt.Errorf("failed to delete file: %w", err)
 			}
+			deletedFiles = append(deletedFiles, oldFile)
 		}
 	}
 
