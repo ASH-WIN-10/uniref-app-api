@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ASH-WIN-10/uniref-app-backend/internal/validator"
+	"github.com/ASH-WIN-10/uniref-app-api/internal/validator"
 )
 
 type Client struct {

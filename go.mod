@@ -1,4 +1,4 @@
-module github.com/ASH-WIN-10/uniref-app-backend
+module github.com/ASH-WIN-10/uniref-app-api
 
 go 1.24.3
 
