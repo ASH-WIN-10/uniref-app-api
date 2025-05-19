@@ -26,4 +26,6 @@ func (app *application) registerRoutes(e *echo.Echo) {
 	e.GET("/v1/clients/:id", app.showClientHandler)
 	e.PUT("/v1/clients/:id", app.updateClientHandler)
 	e.DELETE("/v1/clients/:id", app.deleteClientHandler)
+
+	e.POST("/v1/clients/:id/files", app.createFileHandler)
 }

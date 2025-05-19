@@ -9,6 +9,40 @@ import (
 	"time"
 )
 
+func SaveFileLocally(fileHeader *multipart.FileHeader, file *File) error {
+	dirPath := filepath.Join("assets", "files", fmt.Sprintf("%d", file.ClientID))
+	fileName := fmt.Sprintf("%v_%s_%s", time.Now().Format("2006-01-02_3:04_PM"), file.Category, fileHeader.Filename)
+	filePath := filepath.Join(dirPath, fileName)
+
+	err := os.MkdirAll(dirPath, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	src, err := fileHeader.Open()
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer src.Close()
+
+	dst, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	if err != nil {
+		return fmt.Errorf("failed to copy file: %w", err)
+	}
+
+	file.FileName = fileName
+	file.FilePath = filePath
+	file.OriginalFileName = fileHeader.Filename
+
+	return nil
+}
+
 func CalculateFilesMetadata(form *multipart.Form, clientID int) []File {
 	if form == nil || len(form.File) == 0 {
 		return []File{}
