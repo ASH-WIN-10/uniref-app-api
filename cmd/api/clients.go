@@ -55,8 +55,8 @@ func (app *application) createClientHandler(c echo.Context) error {
 		return nil
 	}
 
-	filesMetadata := app.CalculateFilesMetadata(form, client.ID)
-	err = app.SaveFilesLocally(form, filesMetadata)
+	filesMetadata := data.CalculateFilesMetadata(form, client.ID)
+	err = data.SaveFilesLocally(form, filesMetadata)
 	if err != nil {
 		app.serverErrorResponse(c, err)
 		return nil
@@ -231,14 +231,14 @@ func (app *application) updateClientHandler(c echo.Context) error {
 		return nil
 	}
 
-	filesMetadata := app.CalculateFilesMetadata(form, client.ID)
-	err = app.SaveFilesLocally(form, filesMetadata)
+	filesMetadata := data.CalculateFilesMetadata(form, client.ID)
+	err = data.SaveFilesLocally(form, filesMetadata)
 	if err != nil {
 		app.serverErrorResponse(c, err)
 		return nil
 	}
 
-	deletedFiles, err := app.DeleteFiles(filesMetadata, client.Files)
+	deletedFiles, err := data.DeleteFiles(filesMetadata, client.Files)
 	if err != nil {
 		app.serverErrorResponse(c, err)
 		return nil
@@ -252,7 +252,7 @@ func (app *application) updateClientHandler(c echo.Context) error {
 		}
 	}
 
-	newlyAddedFiles := app.GetNewlyAddedFiles(client.Files, filesMetadata)
+	newlyAddedFiles := data.GetNewlyAddedFiles(client.Files, filesMetadata)
 	if err != nil {
 		app.serverErrorResponse(c, err)
 		return nil

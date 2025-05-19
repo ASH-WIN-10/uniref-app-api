@@ -1,4 +1,4 @@
-package main
+package data
 
 import (
 	"fmt"
@@ -7,18 +7,16 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/ASH-WIN-10/uniref-app-backend/internal/data"
 )
 
-func (app *application) CalculateFilesMetadata(form *multipart.Form, clientID int) []data.File {
+func CalculateFilesMetadata(form *multipart.Form, clientID int) []File {
 	if form == nil || len(form.File) == 0 {
-		return []data.File{}
+		return []File{}
 	}
 
 	dirPath := filepath.Join("assets", "files", fmt.Sprintf("%d", clientID))
 
-	var filesMetadata []data.File
+	var filesMetadata []File
 	fileCategories := []string{"purchase_order", "invoice", "handing_over_report", "pms_report"}
 	for _, category := range fileCategories {
 		if _, ok := form.File[category]; !ok {
@@ -28,7 +26,7 @@ func (app *application) CalculateFilesMetadata(form *multipart.Form, clientID in
 		for _, file := range form.File[category] {
 			fileName := fmt.Sprintf("%v_%s_%s", time.Now().Format("2006-01-02_3:04_PM"), category, file.Filename)
 			filePath := filepath.Join(dirPath, fileName)
-			filesMetadata = append(filesMetadata, data.File{
+			filesMetadata = append(filesMetadata, File{
 				OriginalFileName: file.Filename,
 				FileName:         fileName,
 				FilePath:         filePath,
@@ -41,7 +39,7 @@ func (app *application) CalculateFilesMetadata(form *multipart.Form, clientID in
 	return filesMetadata
 }
 
-func (app *application) SaveFilesLocally(form *multipart.Form, filesMetadata []data.File) error {
+func SaveFilesLocally(form *multipart.Form, filesMetadata []File) error {
 	if len(filesMetadata) == 0 {
 		return nil
 	}
@@ -80,12 +78,12 @@ func (app *application) SaveFilesLocally(form *multipart.Form, filesMetadata []d
 	return nil
 }
 
-func (app *application) DeleteFiles(newFiles, oldFiles []data.File) ([]data.File, error) {
+func DeleteFiles(newFiles, oldFiles []File) ([]File, error) {
 	if len(oldFiles) == 0 {
 		return nil, nil
 	}
 
-	deletedFiles := []data.File{}
+	deletedFiles := []File{}
 	for _, oldFile := range oldFiles {
 		if oldFile.FilePath == "" {
 			continue
@@ -111,12 +109,12 @@ func (app *application) DeleteFiles(newFiles, oldFiles []data.File) ([]data.File
 	return deletedFiles, nil
 }
 
-func (app *application) GetNewlyAddedFiles(oldFiles, newFiles []data.File) []data.File {
+func GetNewlyAddedFiles(oldFiles, newFiles []File) []File {
 	if len(newFiles) == 0 {
 		return nil
 	}
 
-	newlyAddedFiles := []data.File{}
+	newlyAddedFiles := []File{}
 	for _, newFile := range newFiles {
 		found := false
 		for _, oldFile := range oldFiles {
