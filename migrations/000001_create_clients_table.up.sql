@@ -4,5 +4,7 @@ CREATE TABLE IF NOT EXISTS clients (
 	company_name text NOT NULL,
 	client_name text NOT NULL,
 	email text NOT NULL,
-	phone text NOT NULL
+	phone text NOT NULL,
+    state text NOT NULL,
+    city text NOT NULL
 );

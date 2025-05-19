@@ -18,6 +18,8 @@ func (app *application) createClientHandler(c echo.Context) error {
 		String("company_name", &input.CompanyName).
 		String("email", &input.Email).
 		String("phone", &input.Phone).
+		String("state", &input.State).
+		String("city", &input.City).
 		BindError()
 
 	if err != nil {
@@ -36,6 +38,8 @@ func (app *application) createClientHandler(c echo.Context) error {
 		ClientName:  input.ClientName,
 		Email:       input.Email,
 		Phone:       input.Phone,
+		State:       input.State,
+		City:        input.City,
 	}
 
 	v := validator.New()
@@ -122,6 +126,8 @@ func (app *application) deleteClientHandler(c echo.Context) error {
 func (app *application) listClientsHandler(c echo.Context) error {
 	var input struct {
 		CompanyName string
+		State       string
+		City        string
 		data.Filters
 	}
 
@@ -129,18 +135,20 @@ func (app *application) listClientsHandler(c echo.Context) error {
 	qs := c.QueryParams()
 
 	input.CompanyName = app.readString(qs, "company_name", "")
+	input.State = app.readString(qs, "state", "")
+	input.City = app.readString(qs, "city", "")
 
 	input.Filters.Page = app.readInt(qs, "page", 1, v)
 	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
 	input.Filters.Sort = app.readString(qs, "sort", "id")
-	input.Filters.SortSafelist = []string{"id", "company_name", "-id", "-company_name"}
+	input.Filters.SortSafelist = []string{"id", "company_name", "state", "city", "-id", "-company_name", "-state", "-city"}
 
 	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.failedValidationResponse(c, v.Errors)
 		return nil
 	}
 
-	clients, metadata, err := app.models.Clients.GetAll(input.CompanyName, input.Filters)
+	clients, metadata, err := app.models.Clients.GetAll(input.CompanyName, input.State, input.City, input.Filters)
 	if err != nil {
 		app.serverErrorResponse(c, err)
 		return nil
@@ -178,6 +186,8 @@ func (app *application) updateClientHandler(c echo.Context) error {
 		ClientName  string
 		Email       string
 		Phone       string
+		State       string
+		City        string
 		Files       []data.File
 	}
 
@@ -186,6 +196,8 @@ func (app *application) updateClientHandler(c echo.Context) error {
 		String("company_name", &input.CompanyName).
 		String("email", &input.Email).
 		String("phone", &input.Phone).
+		String("state", &input.State).
+		String("city", &input.City).
 		BindError()
 
 	if err != nil {
@@ -203,6 +215,8 @@ func (app *application) updateClientHandler(c echo.Context) error {
 	client.ClientName = input.ClientName
 	client.Email = input.Email
 	client.Phone = input.Phone
+	client.State = input.State
+	client.City = input.City
 
 	v := validator.New()
 	if data.ValidateClient(v, client); !v.Valid() {

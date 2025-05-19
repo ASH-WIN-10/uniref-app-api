@@ -17,6 +17,8 @@ type Client struct {
 	ClientName  string    `json:"client_name"`
 	Email       string    `json:"email"`
 	Phone       string    `json:"phone"`
+	State       string    `json:"state"`
+	City        string    `json:"city"`
 	Files       []File    `json:"files"`
 }
 
@@ -31,17 +33,22 @@ func ValidateClient(v *validator.Validator, client *Client) {
 	v.Check(client.ClientName != "", "client_name", "must be provided")
 	v.Check(len(client.ClientName) <= 100, "client_name", "must not be more than 100 bytes long")
 
+	v.Check(client.State != "", "state", "must be provided")
+	v.Check(len(client.State) <= 50, "state", "must not be more than 50 bytes long")
+	v.Check(client.City != "", "city", "must be provided")
+	v.Check(len(client.City) <= 50, "city", "must not be more than 50 bytes long")
+
 	v.Check(validator.Matches(client.Email, validator.EmailRX), "email", "must be a valid email address")
 	v.Check(len(client.Phone) == 10, "phone", "must be 10 bytes long")
 }
 
 func (m ClientModel) Insert(client *Client) error {
 	query := `
-        INSERT INTO clients (company_name, client_name, email, phone)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO clients (company_name, client_name, email, phone, state, city)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, created_at`
 
-	args := []any{client.CompanyName, client.ClientName, client.Email, client.Phone}
+	args := []any{client.CompanyName, client.ClientName, client.Email, client.Phone, client.State, client.City}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -55,7 +62,7 @@ func (m ClientModel) Get(id int) (*Client, error) {
 	}
 
 	query := `
-        SELECT id, created_at, company_name, client_name, email, phone
+        SELECT id, created_at, company_name, client_name, email, phone, state, city
         FROM clients
         WHERE id = $1`
 
@@ -71,6 +78,8 @@ func (m ClientModel) Get(id int) (*Client, error) {
 		&client.ClientName,
 		&client.Email,
 		&client.Phone,
+		&client.State,
+		&client.City,
 	)
 
 	if err != nil {
@@ -117,14 +126,16 @@ func (m ClientModel) Delete(id int) error {
 func (m ClientModel) Update(client *Client) error {
 	query := `
         UPDATE clients
-        SET company_name = $1, client_name = $2, email = $3, phone = $4
-        WHERE id = $5`
+        SET company_name = $1, client_name = $2, email = $3, phone = $4, state = $5, city = $6
+        WHERE id = $7`
 
 	args := []any{
 		client.CompanyName,
 		client.ClientName,
 		client.Email,
 		client.Phone,
+		client.City,
+		client.State,
 		client.ID,
 	}
 
@@ -145,18 +156,20 @@ func (m ClientModel) Update(client *Client) error {
 	return nil
 }
 
-func (m ClientModel) GetAll(companyName string, filters Filters) ([]*Client, Metadata, error) {
+func (m ClientModel) GetAll(companyName, state, city string, filters Filters) ([]*Client, Metadata, error) {
 	query := fmt.Sprintf(`
-        SELECT count(*) OVER(), id, created_at, company_name, client_name, email, phone
+        SELECT count(*) OVER(), id, created_at, company_name, client_name, email, phone, state, city
         FROM clients
         WHERE (to_tsvector('simple', company_name) @@ plainto_tsquery('simple', $1) OR $1 = '')
+        AND (LOWER(state) = LOWER($2) OR $2 = '')
+        AND (LOWER(city) = LOWER($3) OR $3 = '')
         ORDER BY %s %s, id
-        LIMIT $2 OFFSET $3`, filters.sortColumn(), filters.sortDirection())
+        LIMIT $4 OFFSET $5`, filters.sortColumn(), filters.sortDirection())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	args := []any{companyName, filters.limit(), filters.offset()}
+	args := []any{companyName, state, city, filters.limit(), filters.offset()}
 
 	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -177,6 +190,8 @@ func (m ClientModel) GetAll(companyName string, filters Filters) ([]*Client, Met
 			&client.ClientName,
 			&client.Email,
 			&client.Phone,
+			&client.State,
+			&client.City,
 		)
 
 		if err != nil {

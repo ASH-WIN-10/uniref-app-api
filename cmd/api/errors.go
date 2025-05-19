@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"runtime/debug"
 
 	"github.com/labstack/echo/v4"
 )
@@ -11,9 +12,10 @@ func (app *application) logError(r *http.Request, err error) {
 	var (
 		method = r.Method
 		uri    = r.URL.RequestURI()
+		trace  = debug.Stack()
 	)
 
-	app.logger.Error(err.Error(), "method", method, "uri", uri)
+	app.logger.Error(err.Error(), "method", method, "uri", uri, "stack", string(trace))
 }
 
 func (app *application) errorResponse(c echo.Context, status int, message any) {
