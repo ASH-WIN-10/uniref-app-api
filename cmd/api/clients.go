@@ -171,46 +171,23 @@ func (app *application) updateClientHandler(c echo.Context) error {
 		return nil
 	}
 
-	client, err := app.models.Clients.Get(id)
-	if err != nil {
-		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
-			app.notFoundResponse(c)
-		default:
-			app.serverErrorResponse(c, err)
-		}
-		return nil
-	}
-
-	client.Files, err = app.models.Files.Get(id)
-	if err != nil {
-		app.serverErrorResponse(c, err)
-		return nil
-	}
-
 	var input struct {
-		CompanyName string
-		ClientName  string
-		Email       string
-		Phone       string
-		State       string
-		City        string
+		CompanyName string `json:"company_name"`
+		ClientName  string `json:"client_name"`
+		Email       string `json:"email"`
+		Phone       string `json:"phone"`
+		State       string `json:"state"`
+		City        string `json:"city"`
 	}
 
-	err = echo.FormFieldBinder(c).
-		String("client_name", &input.ClientName).
-		String("company_name", &input.CompanyName).
-		String("email", &input.Email).
-		String("phone", &input.Phone).
-		String("state", &input.State).
-		String("city", &input.City).
-		BindError()
-
+	err = c.Bind(&input)
 	if err != nil {
 		app.badRequestResponse(c, err)
 		return nil
 	}
 
+	client := new(data.Client)
+	client.ID = id
 	client.CompanyName = input.CompanyName
 	client.ClientName = input.ClientName
 	client.Email = input.Email
