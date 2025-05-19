@@ -195,7 +195,6 @@ func (app *application) updateClientHandler(c echo.Context) error {
 		Phone       string
 		State       string
 		City        string
-		Files       []data.File
 	}
 
 	err = echo.FormFieldBinder(c).
@@ -207,12 +206,6 @@ func (app *application) updateClientHandler(c echo.Context) error {
 		String("city", &input.City).
 		BindError()
 
-	if err != nil {
-		app.badRequestResponse(c, err)
-		return nil
-	}
-
-	form, err := c.MultipartForm()
 	if err != nil {
 		app.badRequestResponse(c, err)
 		return nil
@@ -231,39 +224,6 @@ func (app *application) updateClientHandler(c echo.Context) error {
 		return nil
 	}
 
-	filesMetadata := data.CalculateFilesMetadata(form, client.ID)
-	err = data.SaveFilesLocally(form, filesMetadata)
-	if err != nil {
-		app.serverErrorResponse(c, err)
-		return nil
-	}
-
-	deletedFiles, err := data.DeleteFiles(filesMetadata, client.Files)
-	if err != nil {
-		app.serverErrorResponse(c, err)
-		return nil
-	}
-
-	for _, deletedFile := range deletedFiles {
-		err = app.models.Files.Delete(deletedFile.ID)
-		if err != nil {
-			app.serverErrorResponse(c, err)
-			return nil
-		}
-	}
-
-	newlyAddedFiles := data.GetNewlyAddedFiles(client.Files, filesMetadata)
-	if err != nil {
-		app.serverErrorResponse(c, err)
-		return nil
-	}
-
-	err = app.models.Files.Insert(newlyAddedFiles)
-	if err != nil {
-		app.serverErrorResponse(c, err)
-		return nil
-	}
-
 	err = app.models.Clients.Update(client)
 	if err != nil {
 		switch {
@@ -274,8 +234,6 @@ func (app *application) updateClientHandler(c echo.Context) error {
 		}
 		return nil
 	}
-
-	client.Files = filesMetadata
 
 	return c.JSONPretty(http.StatusOK, envelope{"client": client}, "\t")
 }
