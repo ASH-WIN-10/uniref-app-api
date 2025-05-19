@@ -134,8 +134,8 @@ func (m ClientModel) Update(client *Client) error {
 		client.ClientName,
 		client.Email,
 		client.Phone,
-		client.City,
 		client.State,
+		client.City,
 		client.ID,
 	}
 
