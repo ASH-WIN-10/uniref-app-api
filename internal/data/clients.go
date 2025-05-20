@@ -19,6 +19,7 @@ type Client struct {
 	Phone       string    `json:"phone"`
 	State       string    `json:"state"`
 	City        string    `json:"city"`
+	Segment     string    `json:"segment"`
 	Files       []File    `json:"files"`
 }
 
@@ -44,11 +45,19 @@ func ValidateClient(v *validator.Validator, client *Client) {
 
 func (m ClientModel) Insert(client *Client) error {
 	query := `
-        INSERT INTO clients (company_name, client_name, email, phone, state, city)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO clients (company_name, client_name, email, phone, state, city, segment)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, created_at`
 
-	args := []any{client.CompanyName, client.ClientName, client.Email, client.Phone, client.State, client.City}
+	args := []any{
+		client.CompanyName,
+		client.ClientName,
+		client.Email,
+		client.Phone,
+		client.State,
+		client.City,
+		client.Segment,
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -62,7 +71,7 @@ func (m ClientModel) Get(id int) (*Client, error) {
 	}
 
 	query := `
-        SELECT id, created_at, company_name, client_name, email, phone, state, city
+        SELECT id, created_at, company_name, client_name, email, phone, state, city, segment
         FROM clients
         WHERE id = $1`
 
@@ -80,6 +89,7 @@ func (m ClientModel) Get(id int) (*Client, error) {
 		&client.Phone,
 		&client.State,
 		&client.City,
+		&client.Segment,
 	)
 
 	if err != nil {
@@ -126,8 +136,8 @@ func (m ClientModel) Delete(id int) error {
 func (m ClientModel) Update(client *Client) error {
 	query := `
         UPDATE clients
-        SET company_name = $1, client_name = $2, email = $3, phone = $4, state = $5, city = $6
-        WHERE id = $7`
+        SET company_name = $1, client_name = $2, email = $3, phone = $4, state = $5, city = $6, segment = $7
+        WHERE id = $8`
 
 	args := []any{
 		client.CompanyName,
@@ -136,6 +146,7 @@ func (m ClientModel) Update(client *Client) error {
 		client.Phone,
 		client.State,
 		client.City,
+		client.Segment,
 		client.ID,
 	}
 
@@ -156,20 +167,21 @@ func (m ClientModel) Update(client *Client) error {
 	return nil
 }
 
-func (m ClientModel) GetAll(companyName, state, city string, filters Filters) ([]*Client, Metadata, error) {
+func (m ClientModel) GetAll(companyName, state, city, segment string, filters Filters) ([]*Client, Metadata, error) {
 	query := fmt.Sprintf(`
-        SELECT count(*) OVER(), id, created_at, company_name, client_name, email, phone, state, city
+        SELECT count(*) OVER(), id, created_at, company_name, client_name, email, phone, state, city, segment
         FROM clients
         WHERE (SIMILARITY(company_name, $1) > 0 OR $1 = '')
         AND (LOWER(state) = LOWER($2) OR $2 = '')
         AND (LOWER(city) = LOWER($3) OR $3 = '')
+        AND (LOWER(segment) = LOWER($4) OR $4 = '')
         ORDER BY %s %s, id
-        LIMIT $4 OFFSET $5`, filters.sortColumn(), filters.sortDirection())
+        LIMIT $5 OFFSET $6`, filters.sortColumn(), filters.sortDirection())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	args := []any{companyName, state, city, filters.limit(), filters.offset()}
+	args := []any{companyName, state, city, segment, filters.limit(), filters.offset()}
 
 	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -192,6 +204,7 @@ func (m ClientModel) GetAll(companyName, state, city string, filters Filters) ([
 			&client.Phone,
 			&client.State,
 			&client.City,
+			&client.Segment,
 		)
 
 		if err != nil {

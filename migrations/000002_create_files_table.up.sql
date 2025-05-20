@@ -1,4 +1,4 @@
-CREATE TABLE files (
+CREATE TABLE IF NOT EXISTS files (
     id bigserial PRIMARY KEY,
     created_at TIMESTAMP DEFAULT now(),
     original_file_name TEXT NOT NULL,

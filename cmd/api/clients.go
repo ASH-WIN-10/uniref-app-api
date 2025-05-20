@@ -21,6 +21,7 @@ func (app *application) createClientHandler(c echo.Context) error {
 		String("phone", &input.Phone).
 		String("state", &input.State).
 		String("city", &input.City).
+		String("segment", &input.Segment).
 		BindError()
 
 	if err != nil {
@@ -41,6 +42,7 @@ func (app *application) createClientHandler(c echo.Context) error {
 		Phone:       input.Phone,
 		State:       input.State,
 		City:        input.City,
+		Segment:     input.Segment,
 	}
 
 	v := validator.New()
@@ -135,6 +137,7 @@ func (app *application) listClientsHandler(c echo.Context) error {
 		CompanyName string
 		State       string
 		City        string
+		Segment     string
 		data.Filters
 	}
 
@@ -144,18 +147,29 @@ func (app *application) listClientsHandler(c echo.Context) error {
 	input.CompanyName = app.readString(qs, "company_name", "")
 	input.State = app.readString(qs, "state", "")
 	input.City = app.readString(qs, "city", "")
+	input.Segment = app.readString(qs, "segment", "")
 
 	input.Filters.Page = app.readInt(qs, "page", 1, v)
 	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
 	input.Filters.Sort = app.readString(qs, "sort", "id")
-	input.Filters.SortSafelist = []string{"id", "company_name", "state", "city", "-id", "-company_name", "-state", "-city"}
+	input.Filters.SortSafelist = []string{
+		"id", "company_name", "state", "city", "segment",
+		"-id", "-company_name", "-state", "-city", "-segment",
+	}
 
 	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.failedValidationResponse(c, v.Errors)
 		return nil
 	}
 
-	clients, metadata, err := app.models.Clients.GetAll(input.CompanyName, input.State, input.City, input.Filters)
+	clients, metadata, err := app.models.Clients.GetAll(
+		input.CompanyName,
+		input.State,
+		input.City,
+		input.Segment,
+		input.Filters,
+	)
+
 	if err != nil {
 		app.serverErrorResponse(c, err)
 		return nil
@@ -178,6 +192,7 @@ func (app *application) updateClientHandler(c echo.Context) error {
 		Phone       string `json:"phone"`
 		State       string `json:"state"`
 		City        string `json:"city"`
+		Segment     string `json:"segment"`
 	}
 
 	err = c.Bind(&input)
@@ -194,6 +209,7 @@ func (app *application) updateClientHandler(c echo.Context) error {
 	client.Phone = input.Phone
 	client.State = input.State
 	client.City = input.City
+	client.Segment = input.Segment
 
 	v := validator.New()
 	if data.ValidateClient(v, client); !v.Valid() {
