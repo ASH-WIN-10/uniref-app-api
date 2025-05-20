@@ -160,7 +160,7 @@ func (m ClientModel) GetAll(companyName, state, city string, filters Filters) ([
 	query := fmt.Sprintf(`
         SELECT count(*) OVER(), id, created_at, company_name, client_name, email, phone, state, city
         FROM clients
-        WHERE (to_tsvector('simple', company_name) @@ plainto_tsquery('simple', $1) OR $1 = '')
+        WHERE (SIMILARITY(company_name, $1) > 0 OR $1 = '')
         AND (LOWER(state) = LOWER($2) OR $2 = '')
         AND (LOWER(city) = LOWER($3) OR $3 = '')
         ORDER BY %s %s, id
