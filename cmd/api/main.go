@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ASH-WIN-10/uniref-app-api/internal/data"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
 )
@@ -31,14 +32,19 @@ type application struct {
 }
 
 func main() {
-	e := echo.New()
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	err := godotenv.Load()
+	if err != nil {
+		logger.Error("Error loading .env file")
+		os.Exit(1)
+	}
 
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 8080, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("HIMWAN_DB_DSN"), "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("UNIREF_DB_DSN"), "PostgreSQL DSN")
 	flag.Parse()
 
 	db, err := openDB(cfg)
@@ -56,6 +62,7 @@ func main() {
 		models: data.NewModels(db),
 	}
 
+	e := echo.New()
 	app.registerRoutes(e)
 
 	logger.Info("Starting server", "version", version, "port", cfg.port, "env", cfg.env)
