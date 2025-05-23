@@ -9,8 +9,11 @@ func (app *application) registerRoutes(e *echo.Echo) {
 	e.HTTPErrorHandler = app.customHTTPErrorHandler
 
 	e.Use(app.recoverPanic)
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "ip=${remote_ip} protocol=${protocol} method=${method} uri=${uri} status=${status}\n",
+	}))
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:1420", "tauri://localhost"},
+		AllowOrigins:     []string{"http://localhost:1420", "tauri://localhost", "http://tauri.localhost"},
 		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 		AllowCredentials: true,
